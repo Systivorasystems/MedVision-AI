@@ -1,4 +1,5 @@
 ﻿import { ResearchDisclaimer } from "@/components/layout/research-disclaimer";
+import { Button } from "@/components/ui/button";
 
 export default function HomePage() {
   return (
@@ -17,18 +18,10 @@ export default function HomePage() {
           teams. Every AI-assisted result requires clinician review.
         </p>
         <div className="mt-10 flex flex-wrap justify-center gap-3">
-          <button
-            type="button"
-            className="rounded-lg bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-          >
-            Request Access
-          </button>
-          <button
-            type="button"
-            className="rounded-lg border border-border px-6 py-3 text-sm font-medium transition-colors hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-          >
+          <Button size="lg">Request Access</Button>
+          <Button size="lg" variant="outline">
             View Research Overview
-          </button>
+          </Button>
         </div>
       </main>
     </>
