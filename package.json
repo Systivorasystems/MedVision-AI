@@ -1,0 +1,12 @@
+﻿{
+  "name": "medvision-ai",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MedVision AI: clinician-facing medical imaging research and decision-support platform (research use only).",
+  "packageManager": "pnpm@12.18.0",
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  },
+  "scripts": {}
+}
