@@ -8,5 +8,9 @@
     "node": ">=20",
     "pnpm": ">=9"
   },
-  "scripts": {}
+  "scripts": {
+    "dev:web": "pnpm --filter @medvision/web dev",
+    "build:web": "pnpm --filter @medvision/web build",
+    "lint:web": "pnpm --filter @medvision/web lint"
+  }
 }
