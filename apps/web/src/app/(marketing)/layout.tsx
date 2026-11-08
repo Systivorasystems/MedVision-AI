@@ -1,4 +1,5 @@
 ﻿import { ResearchDisclaimer } from "@/components/layout/research-disclaimer";
+import { SiteNavbar } from "@/components/marketing/site-navbar";
 
 export default function MarketingLayout({
   children,
@@ -8,7 +9,8 @@ export default function MarketingLayout({
   return (
     <>
       <ResearchDisclaimer />
-      {children}
+      <SiteNavbar />
+      <main className="flex flex-1 flex-col">{children}</main>
     </>
   );
 }
