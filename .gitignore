@@ -1,0 +1,46 @@
+﻿# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+.next/
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# Environment (never commit secrets)
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Python (ai-service)
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# AI / data (never commit datasets or model weights)
+*.dcm
+*.nii
+*.nii.gz
+*.pt
+*.pth
+*.ckpt
+data/
+uploads/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Testing
+coverage/
