@@ -16,6 +16,16 @@
     "dev:api": "pnpm --filter @medvision/api dev",
     "build:api": "pnpm --filter @medvision/api build",
     "typecheck:api": "pnpm --filter @medvision/api typecheck",
-    "test:api": "pnpm --filter @medvision/api test"
+    "test:api": "pnpm --filter @medvision/api test",
+    "db:validate": "prisma validate",
+    "db:generate": "prisma generate --no-hints",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio",
+    "db:up": "docker compose -f infrastructure/docker-compose.yml --env-file .env up -d",
+    "db:down": "docker compose -f infrastructure/docker-compose.yml --env-file .env down"
+  },
+  "devDependencies": {
+    "dotenv": "^18.0.9",
+    "prisma": "7.10.1"
   }
 }

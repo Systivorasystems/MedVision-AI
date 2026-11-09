@@ -1,0 +1,23 @@
+# Local development database. Not for production use.
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: medvision-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-medvision}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-medvision}
+    ports:
+      # Bound to localhost only, so it is not reachable from the network.
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - medvision_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-medvision} -d ${POSTGRES_DB:-medvision}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  medvision_pgdata:

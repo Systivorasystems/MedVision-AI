@@ -44,3 +44,6 @@ Thumbs.db
 
 # Testing
 coverage/
+
+# Generated Prisma client
+apps/api/src/generated/

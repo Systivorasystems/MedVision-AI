@@ -1,0 +1,236 @@
+// MedVision AI database schema.
+// Rules: no patient identity is stored (only a pseudonymous subjectCode),
+// images live in file storage (only a storageKey + hash here), and every
+// important action is written to AuditLog.
+
+generator client {
+  provider = "prisma-client"
+  // The API imports the generated client from here.
+  output   = "../apps/api/src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  CLINICIAN
+  RESEARCHER
+  VIEWER
+}
+
+enum CaseStatus {
+  DRAFT
+  UPLOADED
+  PROCESSING
+  AWAITING_REVIEW
+  REVIEWED
+  REPORTED
+}
+
+enum Modality {
+  XRAY
+  CT
+  MRI
+  ULTRASOUND
+  OTHER
+}
+
+enum AnalysisStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum ReviewDecision {
+  ACCEPTED
+  AMENDED
+  REJECTED
+}
+
+enum ReportStatus {
+  DRAFT
+  FINAL
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         Role     @default(VIEWER)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  refreshTokens     RefreshToken[]
+  casesCreated      Case[]         @relation("CaseCreatedBy")
+  casesAssigned     Case[]         @relation("CaseAssignedTo")
+  uploads           MedicalImage[]
+  analysesRequested AnalysisRun[]
+  reviews           Review[]
+  reportsAuthored   Report[]       @relation("ReportAuthor")
+  reportsFinalized  Report[]       @relation("ReportFinalizer")
+  auditLogs         AuditLog[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  userId    String
+  // Only a hash of the token is stored, never the token itself.
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model Case {
+  id           String     @id @default(uuid())
+  caseNumber   String     @unique
+  // Pseudonymous research code. Never a name, MRN or national ID.
+  subjectCode  String
+  modality     Modality
+  status       CaseStatus @default(DRAFT)
+  // Free text must not contain patient-identifying information.
+  notes        String?
+  createdById  String
+  assignedToId String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  createdBy  User           @relation("CaseCreatedBy", fields: [createdById], references: [id])
+  assignedTo User?          @relation("CaseAssignedTo", fields: [assignedToId], references: [id])
+  images     MedicalImage[]
+  reports    Report[]
+
+  @@index([status])
+  @@index([assignedToId])
+  @@index([subjectCode])
+  @@map("cases")
+}
+
+model MedicalImage {
+  id           String   @id @default(uuid())
+  caseId       String
+  // Location in file storage. The image itself is not stored in the database.
+  storageKey   String   @unique
+  mimeType     String
+  sizeBytes    Int
+  // SHA-256 of the file, to detect duplicates and tampering.
+  sha256       String
+  uploadedById String
+  createdAt    DateTime @default(now())
+
+  case       Case          @relation(fields: [caseId], references: [id])
+  uploadedBy User          @relation(fields: [uploadedById], references: [id])
+  analyses   AnalysisRun[]
+
+  @@index([caseId])
+  @@index([sha256])
+  @@map("medical_images")
+}
+
+model ModelVersion {
+  id            String   @id @default(uuid())
+  name          String
+  version       String
+  task          String
+  trainingNotes String?
+  // Evaluation metrics recorded for this version (real, measured values only).
+  metrics       Json?
+  isActive      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  analyses AnalysisRun[]
+
+  @@unique([name, version])
+  @@map("model_versions")
+}
+
+model AnalysisRun {
+  id                String         @id @default(uuid())
+  imageId           String
+  modelVersionId    String
+  requestedById     String
+  status            AnalysisStatus @default(QUEUED)
+  // Raw model output. Set only by the AI service, never fabricated.
+  output            Json?
+  heatmapStorageKey String?
+  errorMessage      String?
+  startedAt         DateTime?
+  completedAt       DateTime?
+  createdAt         DateTime       @default(now())
+
+  image        MedicalImage @relation(fields: [imageId], references: [id])
+  modelVersion ModelVersion @relation(fields: [modelVersionId], references: [id])
+  requestedBy  User         @relation(fields: [requestedById], references: [id])
+  reviews      Review[]
+
+  @@index([imageId])
+  @@index([modelVersionId])
+  @@index([status])
+  @@map("analysis_runs")
+}
+
+model Review {
+  id            String         @id @default(uuid())
+  analysisRunId String
+  reviewerId    String
+  decision      ReviewDecision
+  notes         String?
+  createdAt     DateTime       @default(now())
+
+  analysisRun AnalysisRun @relation(fields: [analysisRunId], references: [id])
+  reviewer    User        @relation(fields: [reviewerId], references: [id])
+
+  @@index([analysisRunId])
+  @@index([reviewerId])
+  @@map("reviews")
+}
+
+model Report {
+  id            String       @id @default(uuid())
+  caseId        String
+  status        ReportStatus @default(DRAFT)
+  content       String
+  authorId      String
+  finalizedById String?
+  finalizedAt   DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  case        Case  @relation(fields: [caseId], references: [id])
+  author      User  @relation("ReportAuthor", fields: [authorId], references: [id])
+  finalizedBy User? @relation("ReportFinalizer", fields: [finalizedById], references: [id])
+
+  @@index([caseId])
+  @@map("reports")
+}
+
+// Append-only: the application only ever inserts rows here.
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  action     String
+  entityType String
+  entityId   String?
+  metadata   Json?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
