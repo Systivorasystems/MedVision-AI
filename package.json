@@ -12,6 +12,10 @@
     "dev:web": "pnpm --filter @medvision/web dev",
     "build:web": "pnpm --filter @medvision/web build",
     "lint:web": "pnpm --filter @medvision/web lint",
-    "typecheck:web": "pnpm --filter @medvision/web typecheck"
+    "typecheck:web": "pnpm --filter @medvision/web typecheck",
+    "dev:api": "pnpm --filter @medvision/api dev",
+    "build:api": "pnpm --filter @medvision/api build",
+    "typecheck:api": "pnpm --filter @medvision/api typecheck",
+    "test:api": "pnpm --filter @medvision/api test"
   }
 }
