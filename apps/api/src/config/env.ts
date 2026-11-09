@@ -16,6 +16,7 @@ const envSchema = z.object({
   API_PORT: z.coerce.number().int().min(1).max(65535).default(4000),
   // Comma-separated list of allowed browser origins.
   CORS_ORIGIN: z.string().min(1).default("http://localhost:3000"),
+  DATABASE_URL: z.string().min(1),
   LOG_LEVEL: z
     .enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"])
     .default("info"),

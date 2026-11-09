@@ -2,7 +2,8 @@ import request from "supertest";
 import { describe, expect, it } from "vitest";
 import { createApp } from "./app.js";
 
-const app = createApp();
+// The foundation tests never touch a real database.
+const app = createApp({ checkDatabase: async () => true });
 
 describe("API foundation", () => {
   it("GET /api/v1/health returns ok with a request id", async () => {
@@ -10,6 +11,17 @@ describe("API foundation", () => {
 
     expect(res.status).toBe(200);
     expect(res.body.status).toBe("ok");
+    expect(res.body.db).toBe("ok");
+    expect(res.headers["x-request-id"]).toBeTruthy();
+  });
+
+  it("GET /api/v1/health returns 503 when the database is down", async () => {
+    const downApp = createApp({ checkDatabase: async () => false });
+    const res = await request(downApp).get("/api/v1/health");
+
+    expect(res.status).toBe(503);
+    expect(res.body.status).toBe("degraded");
+    expect(res.body.db).toBe("down");
     expect(res.headers["x-request-id"]).toBeTruthy();
   });
 
